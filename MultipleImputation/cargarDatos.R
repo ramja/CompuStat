@@ -72,7 +72,7 @@ for (j in 1:m){
 
 beta.estims <- apply(beta.all,2,mean)
 
-dbeta.var.within <- numeric(ncols)
+beta.var.within <- numeric(ncols)
 for (rep in 1:m){ 
   beta.var.within <- beta.var.within + (summary(res[[rep]])$coefficients[,2][-1])^2/m
 }
@@ -83,3 +83,5 @@ beta.var <- beta.var.within + (1+1/m)*beta.var.between
 table <-data.frame(beta=beta.estims, sd=sqrt(beta.var))
 round(table,5)
 
+
+save(list=ls(), file="data.RData")
