@@ -48,7 +48,10 @@ shinyServer(function(input, output) {
     #Funcion a integrar  f_m
     plot(X[1:min(length(X),length(simMC$int))],simMC$int[1:min(length(X),length(simMC$int))],type='l',col=1)
     #intervalos de confianza
-    lines(X[1:min(length(X),length(simMC$int))],simMC$conf[1:min(length(X),length(simMC$int))],type='c',col=1)
+    if(!("e02" %in% unlist(input$g)) && !("b02" %in% unlist(input$g))){ 
+      lines(X[1:min(length(X),length(simMC$int))],simMC$confInf[1:min(length(X),length(simMC$int))],type='l',col=4)
+      lines(X[1:min(length(X),length(simMC$int))],simMC$confSup[1:min(length(X),length(simMC$int))],type='l',col=4)
+    }
     #Dibujo el valor real
     abline(h=Intf_m_0_2(input$m))
     #Si se va a comparar con la exponencial truncada

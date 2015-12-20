@@ -28,15 +28,17 @@ Intf_m_0_2<-function(m) 1-exp(-2*m)
 #MonteCarlo Crudo
 aprox_MC<-function(nmax,nsim,m){
   result=list()
-  conf=list()
+  confInf=list()
+  confSup=list()
   for (i in  c(1:nmax/nsim)) {
     U2<-runif(nsim,0,2)
     Ph<-2*f_m(U2,m)   
     result[i]<-mean(Ph)
-    conf[i]<-mean(Ph)-intConf(Ph)
+    confInf[i]<-mean(Ph)-intConf(Ph)
+    confSup[i]<-mean(Ph)+intConf(Ph)
     # print result[i]-Intf_m_0_2(m)
   }
-  list("int"=result,"conf"=conf)
+  list("int"=result,"confInf"=confInf,"confSup"=confSup)
 }
 
 
@@ -77,7 +79,7 @@ aprox_B<-function(nmax,nsim,m,alpha,beta){
 }
 
 #Intervalos de confianza
-intConf<-function(x) qnorm(.95,mean(x),sqrt(var(x)/length(x)))
+intConf<-function(x) qnorm(.025,mean(x),sqrt(var(x)/length(x)))
 
 # plot(X,f_m(X,1),type = 'l')
 # plot(X,inv_exp(X,1))

@@ -19,7 +19,7 @@ shinyUI(fluidPage(
       sliderInput("nmaxsim",
                   "Máximo número de simulaciones",
                   min = 100,
-                  max = 10000,
+                  max = 100000,
                   value = 1000
       ),
       sliderInput("m",
