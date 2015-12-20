@@ -1,7 +1,16 @@
 #include <Rcpp.h>
-//#include <RcppArmadillo.h>
 using namespace Rcpp;
 
+
+/* Funcion Freq 
+ * Parametros: 
+ * ngrams:  Entero. Numero de caracteres diferentes en el texto mas uno (espacio)
+ * text:    Rcpp::CharacterVector. Texto para extraer frecuencias
+ *
+ * Regresa: Rcpp::NumericMatrix. Una matriz con las frecuencias de pares ordenados de letras
+ *          y pares (espacio-letra)
+ */
+   
 // [[Rcpp::export]]
 NumericMatrix Freq(int ngrams, CharacterVector text){
   std::string string = Rcpp::as<std::string>(text);
@@ -13,7 +22,7 @@ NumericMatrix Freq(int ngrams, CharacterVector text){
   {
     /** Consideramos solo caracteres 'a' a 'z'
     ignoramos los demas */
-    //printf("val%i",(string[c]-'a'));
+
     if (string[c] >= 'a' && string[c] <= 'z'
           && 	string[c+1] >= 'a' && string[c+1] <= 'z'  ){
       
@@ -33,6 +42,17 @@ NumericMatrix Freq(int ngrams, CharacterVector text){
   return  count;
 } 
 
+
+/* Funcion newFreq 
+ * Parametros: 
+ * ngrams:  Entero. Numero de caracteres diferentes en el texto mas uno (espacio)
+ * text:    List(Rcpp::CharacterVector). Lista con textos para extraer frecuencias. 
+ *          Se usa para generar matrices de frecuencias de libros o conjuntos de textos.
+ *
+ * Regresa: Rcpp::NumericMatrix. Una matriz con las frecuencias de pares ordenados de letras
+ *          y pares (espacio-letra)
+ */
+
 // [[Rcpp::export]]
 NumericMatrix newFreq(int ngrams, List text){
 
@@ -45,12 +65,12 @@ NumericMatrix newFreq(int ngrams, List text){
   while (r<n){
     std::string string = Rcpp::as<std::string>(text[r]);
     int c=0;
-    //printf("n:%d",r);
+
     while (string[c] != '\0' && string[c+1] != '\0')
     {
       /** Consideramos solo caracteres 'a' a 'z'
        ignoramos los demas */
-      //printf("val%i",(string[c]-'a'));
+
       if (string[c] >= 'a' && string[c] <= 'z'
             && 	string[c+1] >= 'a' && string[c+1] <= 'z'  ){
         
@@ -73,6 +93,15 @@ NumericMatrix newFreq(int ngrams, List text){
   return  count;
 } 
 
+
+/* Funcion ciDecipher
+ * Parametros: 
+ * cipher:  Rcpp::IntegerVector. Llave que se empleara para cifrar/decifrar una cadena
+ * text:    Rcpp::CharacterVector. Texto a cifrar/decifrar
+ *          
+ *
+ * Regresa: Rcpp::CharacterVector. Una cadena a la que se le aplica la llave ingresada
+ */
 // [[Rcpp::export]]
 CharacterVector ciDecipher(IntegerVector cipher, CharacterVector text){
   std::string string = Rcpp::as<std::string>(text);
@@ -90,7 +119,18 @@ CharacterVector ciDecipher(IntegerVector cipher, CharacterVector text){
   
   return string;
 }
-//Proposal: random walk in the same dimension as the number of parameters
+
+
+
+/* Funcion proposal
+ * Parametros: 
+ * cipher:  Rcpp::IntegerVector. Llave que se empleara para cifrar/decifrar una cadena
+ * jump:    Entero. Numero de cambios aleatorios, que se realizaran para generar una nueva
+ *          llave.
+ *          
+ *
+ * Regresa: Rcpp::IntegerVector. Una nueva llave propuesta a partir de la llave ingresada
+ */
 // [[Rcpp::export]]
 IntegerVector proposal(IntegerVector theta, int jump){
   int nparam = theta.size();
@@ -98,8 +138,8 @@ IntegerVector proposal(IntegerVector theta, int jump){
   for (int i=0; i<jump; i++){
     int ind=floor(R::runif(0,1)*nparam);
     int val=floor(R::runif(0,1)*nparam);
-  //  printf("%d,%d-%d\n",newSubs(i),newSubs(i+1),theta[newSubs(i)]); 
-  //intercambiamos el valor anterior por el nuevo
+
+    //intercambiamos el valor anterior por el nuevo
     int ant=theta[ind];
     theta[ind]=val;
     for (int j=0;j<nparam;j++){
@@ -107,11 +147,26 @@ IntegerVector proposal(IntegerVector theta, int jump){
         theta[j]=ant;
       }
     }
-    //printf("%d,%d-%d\n",ind,val,ant);
+
     }
   return theta;
   }
 
+
+/* Funcion objdens
+ * Parametros: 
+ * data:          Rcpp::NumericMatrix. Matriz de frecuencias del texto a decifrar
+ * ref:           Rcpp::NumericMatrix. Matriz de frecuencias del texto de referencia
+ * p:             Entero. Factor de exponenciacion
+ * refLength:     Entero. Factor de escalamiento para la referencia
+ * dataLength:    Entero. Factor de escalamiento para el texto
+ *          
+ *
+ * Regresa: double. Score (Loglikelihood) de ajuste de la cadena asociada a la matriz data
+ *          con referencia al texto de referencia representado en la matriz de frecuencias
+ *          ref con parametros de ajuste p refLength, dataLength (En el presente trabajo
+ *          solo se uso el valor de ajuste de p)
+ */
 // [[Rcpp::export]]
 double objdens(NumericMatrix data,NumericMatrix ref,int p, int refLength, int dataLength){
 
@@ -124,37 +179,54 @@ double objdens(NumericMatrix data,NumericMatrix ref,int p, int refLength, int da
   for (unsigned int j=0; j<ncol; j++) {
     for (unsigned int i=0; i<nrow; i++)  {
       lkh += data(i,j)*(log(ref(i,j))+log(refLength));
-      //printf("-%f\n",lkh);
     }
   }
-  
-  //double s = Rcpp::sum(X);
-  //printf("lkh:%f",lkh);
-  
+
+
   return lkh;
 }      
 
+
+/* Funcion objdens
+ * Parametros: 
+ * nsim:          Entero. Numero de simulaciones
+ * theta0:        Rcpp::IntegerVector. Llave inicial
+ * objdens:       Funcion. Función de Score
+ * proposal       Funcion. Función de propuesta
+ * text:    Rcpp::CharacterVector. Texto a cifrar/decifrar
+ * ref:           Rcpp::NumericMatrix. Matriz de frecuencias del texto de referencia
+ * jump:          Entero. Numero de cambios aleatorios, que se realizaran para generar una nueva
+ *                llave.
+ * p:             Entero. Factor de exponenciacion
+ * refLength:     Entero. Factor de escalamiento para la referencia
+ * dataLength:    Entero. Factor de escalamiento para el texto
+ *          
+ *
+ * Regresa: Lista que contiene
+ *          "theta". Cadena con las llaves generadas en el algoritmo
+ *          "rejections". Vector con el número de rechazos para cada iteración
+ *          "maxIter" Posición en la que se encuentra la llave con el max score
+ */
 // [[Rcpp::export]]
 List MHBayes(int nsim, IntegerVector theta0, Function objdens, Function proposal, 
              CharacterVector text, NumericMatrix ref, int jump, int p, int refLength, int dataLength){
-  // theta will contain the output, one column pero parameter, row per simulation
+
   int nparam=theta0.size();
   int maxIter=0;
   double newScore,maxScore=0.0;
   NumericMatrix theta(nsim, nparam);  
   theta(0,_) = theta0;
   NumericMatrix data=Freq(nparam+1,text); 
-  // X will save proposals, Rej will save number of rejection rates=(trials-1)/trials
-  NumericVector X(nparam);
+  //Vector que guarda el número de rechazos antes de aceptar una propuesta
   NumericVector rejections(nsim);
-  // logU is for the test
+  // logU para el criterio de Metropolis
   double logU;
   // accept tells wether a proposal is accepted, trials counts attemps before accepting
   bool accept=false;
   // trials max is the maxnumber of inner cycles in what follows, trial the counter
   int trials;
   int maxtrials=10000;
-  //double jump = .1;
+
   // outer cycle: sim n jumps
   for (int i=1; i<nsim; i++){
     // inner cycle: repeat until accepting
@@ -168,14 +240,15 @@ List MHBayes(int nsim, IntegerVector theta0, Function objdens, Function proposal
       // the minus is since we used LOGS!!!!!
       newScore=as<double>(objdens(newData,ref,p, refLength, dataLength));
       double prop=p*(newScore-as<double>(objdens(data,ref,p, refLength, dataLength)));
-      //printf("val:%fprop:%f",logU,prop);
+
       if(logU < prop) { 
         accept = true;
         theta(i,_) = newtheta;
+        // Si el score supera el max score, lo guardaremos como max score así como el 
+        // indice de la cadena en que se encuentra
         if (newScore > maxScore) {
           maxScore=newScore;
           maxIter=i;
-          //printf("MS:%f-%d",maxScore,i);
         }
         data=newData;
       } 
