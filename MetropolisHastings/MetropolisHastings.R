@@ -1,3 +1,11 @@
+# Descripcion
+# Se corre la regresión Bayesiana con la base de datos iris.
+# Se intenta predecir la variable Petal.Width a partir de las otras 3 variables,
+# Se ajustan los parámetros  (jump) seleccionados para la regresion
+# El resultado se encuentra en la variable estims con los resultados de las cadenas de
+# distribución de las betas y el historial de rechazos
+# Se verifica la autocorrelación y se calcula el error cuadrático
+
 library(Rcpp)
 
 # DATA
@@ -87,7 +95,8 @@ cppFunction('
 
     /* n es el numero de variables                                                         */
     int n=theta.size()-2;
-    //printf("n%d-m%d",n,m);
+
+
     /* Definimos las variables que usaremos                                                */
 
 
@@ -101,7 +110,6 @@ cppFunction('
     NumericVector aux(n);
     /* Varianza                                                                            */
     double sigma=theta[n+1];
-    //printf("sigma%f",sigma);
 
     /* X es nuestro vector de  variables independientes                                    */
     X = data(_,Range(0,n-1)); 
@@ -114,8 +122,6 @@ cppFunction('
       aux=X(j,_)*theta[seq(1,n)];
       /* sumamos y añadimos el intercepto                                                  */
       res[j] = std::accumulate(aux.begin(),aux.end(),0.0)+theta[0];
-      //res=X*theta(Range(1,n))+theta(0);
-      //printf("aux%f-%f_%f-%f-res%f",aux[0],aux[1],aux[2],res[j]);
     }
     
     /*   Calculamos el loglikelihood                                                       */ 
